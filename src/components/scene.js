@@ -19,6 +19,7 @@ import {
   RepeatWrapping,
   MeshPhongMaterial,
   PointLight,
+  MeshMatcapMaterial,
   LoadingManager,
   WebGLRenderTarget,
   ShaderMaterial,
@@ -32,6 +33,10 @@ import { Reflector } from "three/examples/jsm/objects/Reflector.js";
 import { Mesh } from "three";
 import { ShaderChunk } from "three";
 import loaderManager from "../managers/LoaderManager.js";
+import fragmentShader from "../glsl/main.frag?raw";
+import vertexShader from "../glsl/main.vert?raw";
+import LoaderManager from "../managers/LoaderManager.js";
+
 
 export default class MainScene {
   #canvas;
@@ -55,6 +60,18 @@ export default class MainScene {
       {
         name: "waterdudv",
         texture: "/textures/waterdudv.jpg"
+      },
+      {
+        name: "matcap",
+        texture: "/textures/matcap.png"
+      },
+      {
+        name: "paper",
+        texture: "/textures/paper.png"
+      },
+      {
+        name: "boatModel",
+        model: "/models/boat.glb"
       }
     ]
 
@@ -68,6 +85,8 @@ export default class MainScene {
     
     this.setReflector();
     this.setSky();
+    this.setBoat();
+
     this.handleResize();
     this.events();
   };
@@ -82,126 +101,40 @@ export default class MainScene {
     this.#scene.add(a);
 
   }
-
-  setReflector() {
-    const geometry = new PlaneGeometry(10000, 10000, 1, 1);
-
-    const dudvEntry = loaderManager.assets['waterdudv'];
-    const dudvMap = dudvEntry && dudvEntry.texture;
-    if (dudvMap) {
-      dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping;
-      dudvMap.repeat.set(4, 4);
-    } else {
-      console.warn("waterdudv texture not found in loaderManager.assets — water will use fallback color");
-    }
-
-    const uniforms = {
-      tDudv: { value: dudvMap || null },
-      time: { value: 0 },
-      color: { value: new Color(0x0b3d91) },
-      resolution: { value: new Vector3(window.innerWidth, window.innerHeight, 1) },
-      tDiffuse: { value: null },
-      uHasDudv: { value: dudvMap ? 1.0 : 0.0 }
-    };
-
-    // expose camera position to shader for fresnel computation
-    uniforms.cameraPos = { value: new Vector3() };
-
-    const vertexShader = `
-      varying vec2 vUv;
-      varying vec4 vProj;
-      uniform mat4 textureMatrix;
-      varying vec3 vWorldPos;
-      void main() {
-        vUv = uv;
-        vProj = textureMatrix * vec4(position, 1.0);
-        vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `;
-
-    const fragmentShader = `
-      precision highp float;
-      varying vec2 vUv;
-      varying vec4 vProj;
-      varying vec3 vWorldPos;
-      uniform sampler2D tDudv;
-      uniform sampler2D tDiffuse;
-      uniform float time;
-      uniform vec3 color;
-      uniform float uHasDudv;
-      uniform vec3 cameraPos;
-
-      void main() {
-        vec2 uv = vUv;
-
-        // compute dudv-based distortion
-        vec2 distortion = vec2(0.0);
-        if (uHasDudv > 0.5) {
-          vec2 d1 = texture2D(tDudv, uv * 4.0 + vec2(time * 0.08, -time * 0.05)).rg * 2.0 - 1.0;
-          vec2 d2 = texture2D(tDudv, uv * 2.0 + vec2(-time * 0.03, time * 0.06)).rg * 2.0 - 1.0;
-          distortion = (d1 + d2 * 0.7) * 0.04;
-        }
-
-        // projective UV from mirrored camera and apply distortion scaled by clip.w
-        vec4 proj = vProj;
-        proj.xy += distortion * proj.w * 0.5;
-        vec4 colSample = texture2DProj(tDiffuse, proj);
-
-        // fresnel based on view direction and flat normal (0,1,0)
-        vec3 viewDir = normalize(cameraPos - vWorldPos);
-        vec3 normal = vec3(0.0, 1.0, 0.0);
-        float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 3.0);
-
-        // water base color (kept very low) and blend primarily with the reflection
-        vec3 base = color * 0.02;
-        vec3 reflected = colSample.rgb;
-        // favor reflection; fresnel increases reflection at glancing angles
-        vec3 col = mix(base, reflected, clamp(0.05 + fresnel * 0.95, 0.0, 1.0));
-
-        // minimal specular removed to avoid artificial bright spots in reflections
-        gl_FragColor = vec4(col, 1.0);
-      }
-    `;
-
-    const material = new ShaderMaterial({
-      uniforms,
-      vertexShader,
-      fragmentShader,
-      side: 2,
-      transparent: true,
-      depthWrite: false,
-    });
-
-    this.groundMirror = new Mesh(geometry, material);
-    this.groundMirror.rotation.x = -Math.PI / 2;
-    this.groundMirror.position.y = 0;
-    this.groundMirror.receiveShadow = true;
-    this.#scene.add(this.groundMirror);
-
-  // create render target for reflection texture
-  this.renderTarget = new WebGLRenderTarget(window.innerWidth, window.innerHeight);
-  // mirror camera - create a fresh PerspectiveCamera with same params
-  this.mirrorCamera = this.#camera.clone();
-  this.mirrorCamera.matrixAutoUpdate = true;
-  // add textureMatrix uniform for projective sampling
-  uniforms.textureMatrix = { value: new Matrix4() };
-  // wire tDiffuse to the material uniform
-  this.groundMirror.material.uniforms.tDiffuse.value = this.renderTarget.texture;
-  this.groundMirror.material.uniforms.textureMatrix = uniforms.textureMatrix;
+  resolveIncludes(shader) {
+    return shader.replace(/#include <(.*?)>/g, (match, name) => ShaderChunk[name] || '');
   }
+  setReflector() {
+  const geometry = new CircleGeometry(4000, 80, 64);
+  const customShader = Reflector.ReflectorShader;
 
+  customShader.vertexShader = this.resolveIncludes(vertexShader);
+  customShader.fragmentShader = this.resolveIncludes(fragmentShader);
+
+  const dudvMap = loaderManager.assets["waterdudv"].texture;
+  dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping;
+  customShader.uniforms.tDudv = { value: dudvMap };
+  customShader.uniforms.time = { value: 0 };
+
+  this.groundMirror = new Reflector(geometry, {
+    shader: customShader,
+    clipBias: 0.003,
+    textureWidth: window.innerWidth,
+    textureHeight: window.innerHeight,
+    color: 0x0000000,
+  });
+
+  this.groundMirror.position.y = 0;
+  this.groundMirror.rotateX(-Math.PI / 2);
+  this.#scene.add(this.groundMirror);
+  }
   setSky() {
-    // Create stars on a large sphere and keep the Points mesh centered on the camera.
-    // This makes the stars appear at 'infinite' distance and visible across the whole sky
-    // even when the camera moves.
     const g = new BufferGeometry();
     const positions = [];
-    const starCount = 2000; // adjust for quality/perf
-    const radius = 4000; // large radius so stars appear far away
+    const starCount = 2000; 
+    const radius = 4000; 
 
     for (let i = 0; i < starCount; i++) {
-      // uniformly sample directions on a sphere surface
       const u = Math.random();
       const v = Math.random();
       const theta = 2 * Math.PI * u;
@@ -224,30 +157,24 @@ export default class MainScene {
     });
 
     const mesh = new Points(g, m);
-    // disable frustum culling so stars are always rendered
     mesh.frustumCulled = false;
-    // store reference so we can keep the star cloud centered on the camera each frame
     this.skyStars = mesh;
     this.#scene.add(mesh);
   }
-
   setControls() {
     this.#controls = new OrbitControls(this.#camera, this.#renderer.domElement);
     this.#controls.enableDamping = true;
   }
-
   setStats() {
     this.#stats = new Stats();
     document.body.appendChild(this.#stats.dom);
   }
-
   setRender() {
     this.#renderer = new WebGLRenderer({
       canvas: this.#canvas,
       antialias: true,
     });
   }
-
   setCamera() {
     const aspect = this.#width / this.#height;
     this.#camera = new PerspectiveCamera(60, aspect, 0.1, 10000);
@@ -259,96 +186,50 @@ export default class MainScene {
       this.#scene = new Scene();
       this.#scene.background = new Color(0x000000);
   }
+  setBoat() {
+    const gltf = loaderManager.assets["boatModel"].model;
+    const boatModel = gltf.scene.clone(); 
+    const matcapTex = loaderManager.assets["matcap"].texture;
+
+    boatModel.traverse((child) => {
+      if (child.isMesh) {
+        child.material = new MeshMatcapMaterial({
+          matcap: matcapTex,
+          color: 0xffffff,
+        });
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    // Scale & position it
+    boatModel.scale.set(10, 10, 10);
+
+    // make sure groundMirror exists before positioning
+    const mirrorY = this.groundMirror ? this.groundMirror.position.y : 0;
+    boatModel.position.set(0, mirrorY + 2, 0); 
+
+    this.#scene.add(boatModel);
+    this.boat = boatModel;
+  }
+
 
   draw = () => {
     this.#stats.begin();
 
     const t = this.clock?.getElapsedTime() ?? 0;
-    if (this.refractor?.material?.uniforms?.time) {
-      this.refractor.material.uniforms.time.value = t;
-    }
-    // update groundMirror shader time
-    if (this.groundMirror?.material?.uniforms?.time) {
-      this.groundMirror.material.uniforms.time.value = t;
-    }
+    this.groundMirror.material.uniforms.time.value += 0.5; //animate distortion on the water surface
 
-    // render simple mirrored scene into renderTarget for reflection sampling
-    if (this.renderTarget && this.mirrorCamera) {
-      // hide water plane while rendering the reflection to avoid recursion
-      this.groundMirror.visible = false;
-
-      // compute proper mirrored camera across plane y=0
-      const planeNormal = new Vector3(0, 1, 0);
-      const planePoint = new Vector3(0, 0, 0);
-      // reflect camera position across plane
-      const camPos = this.#camera.position.clone();
-      const toPoint = camPos.clone().sub(planePoint);
-      const distance = toPoint.dot(planeNormal);
-      const mirrorPos = camPos.clone().sub(planeNormal.clone().multiplyScalar(2 * distance));
-      this.mirrorCamera.position.copy(mirrorPos);
-
-      // reflect lookAt target (use world origin as approximate target)
-      const target = new Vector3(0, 0, 0);
-      const toT = target.clone().sub(planePoint);
-      const tdist = toT.dot(planeNormal);
-      const mirrorTarget = target.clone().sub(planeNormal.clone().multiplyScalar(2 * tdist));
-      // reflect up vector
-      const up = this.#camera.up.clone();
-      const upDot = up.dot(planeNormal);
-      const mirrorUp = up.clone().sub(planeNormal.clone().multiplyScalar(2 * upDot));
-      this.mirrorCamera.up.copy(mirrorUp);
-      this.mirrorCamera.lookAt(mirrorTarget);
-
-      // ensure projection matrix matches main camera
-      this.mirrorCamera.projectionMatrix.copy(this.#camera.projectionMatrix);
-
-      // compute texture matrix: bias * projection * view * model
-      const bias = new Matrix4();
-      bias.set(
-        0.5, 0.0, 0.0, 0.5,
-        0.0, 0.5, 0.0, 0.5,
-        0.0, 0.0, 0.5, 0.5,
-        0.0, 0.0, 0.0, 1.0
-      );
-
-      // ensure mirror camera matrices are updated
-      this.mirrorCamera.updateMatrixWorld();
-      // compute matrixWorldInverse (view matrix)
-      this.mirrorCamera.matrixWorldInverse.copy(this.mirrorCamera.matrixWorld).invert();
-
-      const textureMatrix = new Matrix4();
-      textureMatrix.multiplyMatrices(bias, this.mirrorCamera.projectionMatrix);
-      textureMatrix.multiply(this.mirrorCamera.matrixWorldInverse);
-      textureMatrix.multiply(this.groundMirror.matrixWorld);
-      if (this.groundMirror.material.uniforms.textureMatrix) {
-        this.groundMirror.material.uniforms.textureMatrix.value.copy(textureMatrix);
-      }
-      // update cameraPos uniform for fresnel
-      if (this.groundMirror.material.uniforms.cameraPos) {
-        this.groundMirror.material.uniforms.cameraPos.value.copy(this.#camera.position);
-      }
-
-      const prevRenderTarget = this.#renderer.getRenderTarget();
-      this.#renderer.setRenderTarget(this.renderTarget);
-      this.#renderer.clear();
-      this.#renderer.render(this.#scene, this.mirrorCamera);
-      this.#renderer.setRenderTarget(prevRenderTarget);
-
-      this.groundMirror.visible = true;
-    }
-    
-
+    //delete this sphere afterwards
     if (!this.sphere) {
       const geo = new IcosahedronGeometry(5, 0);
-      const mat = new MeshPhongMaterial({
-        color: 0xffffff,
-        emissive: 0x333333,
-        flatShading: true,
+      const mat = new MeshMatcapMaterial({
+        matcap: LoaderManager.assets["matcap"].texture, 
       });
       this.sphere = new Mesh(geo, mat);
       this.#scene.add(this.sphere);
     }
-
+    //animate icosahedron
     this.sphere.position.set(
       Math.cos(t) * 30,
       Math.abs(Math.cos(t * 2)) * 20 + 5,
@@ -356,12 +237,33 @@ export default class MainScene {
     );
     this.sphere.rotation.y = Math.PI / 2 - t;
     this.sphere.rotation.z = t * 8;
+    //till here
+
+    //animate floating boat
+    if (this.boat) {
+
+      const waveSpeed = 0.3 + Math.sin(t * 0.1) * 0.05;
+      //this.boat.position.y = 1.05 + Math.sin(t * waveSpeed) * 0.5;
+
+      // small tilts — gives that "floating" rotation
+      this.boat.rotation.z = Math.sin(t * waveSpeed) * 0.03; // side tilt (roll)
+      this.boat.rotation.x = Math.cos(t * waveSpeed) * 0.02; // front/back tilt (pitch)
+      this.boat.rotation.y = Math.sin(t * waveSpeed) * 0.01; // gentle yaw (turn)
+    }
+
 
     if (this.#controls) this.#controls.update();
+
     // keep sky stars centered on the camera so they always fill the sky
     if (this.skyStars && this.#camera) {
       this.skyStars.position.copy(this.#camera.position);
     }
+    // keep reflector also centered on the camera
+    if (this.groundMirror && this.#camera) {
+      this.groundMirror.position.copy(this.#camera.position);
+      this.groundMirror.position.y = 0;
+    }
+
     this.#renderer.render(this.#scene, this.#camera);
     this.#stats.end();
     this.raf = window.requestAnimationFrame(this.draw);

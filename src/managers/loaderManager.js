@@ -1,142 +1,147 @@
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
-import { TextureLoader } from 'three'
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
+import { TextureLoader, LoadingManager } from "three";
 
 class LoaderManager {
-  #assets = {}
-  #textureLoader = new TextureLoader()
-  #GLTFLoader = new GLTFLoader()
-  #OBJLoader = new OBJLoader()
-  #DRACOLoader = new DRACOLoader()
-  #FontLoader = new FontLoader()
-
   constructor() {
-    this.#assets = {}
+    this.manager = new LoadingManager();
+    this.assets = {};
+
+    this.textureLoader = new TextureLoader(this.manager);
+    this.gltfLoader = new GLTFLoader(this.manager);
+    this.objLoader = new OBJLoader(this.manager);
+    this.fontLoader = new FontLoader(this.manager);
+    this.dracoLoader = new DRACOLoader(this.manager);
+
+    // Draco decoder
+    this.dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
+    this.gltfLoader.setDRACOLoader(this.dracoLoader);
   }
 
-  get assets() {
-    return this.#assets
-  }
+  /** Main loader function */
+  async load(assetList = []) {
+    const tasks = assetList.map(async (asset) => {
+      const { name, model, texture, img, font, obj, gltf } = asset;
 
-  set assets(value) {
-    this.#assets = value
-  }
+      if (!this.assets[name]) this.assets[name] = {};
 
-  get(name) {
-    return this.#assets[name]
-  }
-
-  load = (data) =>
-    new Promise((resolve) => {
-      const promises = []
-      for (let i = 0; i < data.length; i++) {
-        const { name, gltf, texture, img, font, obj } = data[i]
-
-        if (!this.#assets[name]) {
-          this.#assets[name] = {}
-        }
-
-        if (gltf) {
-          promises.push(this.loadGLTF(gltf, name))
+      try {
+        if (model || gltf) {
+          const result = await this.loadGLTF(model || gltf, name);
+          this.assets[name].model = result;
         }
 
         if (texture) {
-          promises.push(this.loadTexture(texture, name))
+          const tex = await this.loadTexture(texture, name);
+          this.assets[name].texture = tex;
         }
 
         if (img) {
-          promises.push(this.loadImage(img, name))
+          const image = await this.loadImage(img, name);
+          this.assets[name].img = image;
         }
 
         if (font) {
-          promises.push(this.loadFont(font, name))
+          const f = await this.loadFont(font, name);
+          this.assets[name].font = f;
         }
 
         if (obj) {
-          promises.push(this.loadObj(obj, name))
+          const o = await this.loadObj(obj, name);
+          this.assets[name].obj = o;
         }
+      } catch (err) {
+        console.error(`❌ Error loading asset: ${name}`, err);
       }
+    });
 
-      Promise.all(promises).then(() => resolve())
-    })
+    await Promise.all(tasks);
+    console.log("✅ Assets loaded:", this.assets);
+  }
 
+  /** GLTF/GLB loader */
   loadGLTF(url, name) {
-    return new Promise((resolve) => {
-      this.#DRACOLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/')
-      this.#GLTFLoader.setDRACOLoader(this.#DRACOLoader)
-
-      this.#GLTFLoader.load(
+    return new Promise((resolve, reject) => {
+      this.gltfLoader.load(
         url,
-        (result) => {
-          this.#assets[name].gltf = result
-          resolve(result)
-        },
+        (gltf) => resolve(gltf),
         undefined,
-        (e) => {
-          console.log(e)
+        (err) => {
+          console.error(`❌ Failed to load GLTF (${name}):`, err);
+          reject(err);
         }
-      )
-    })
+      );
+    });
   }
 
+  /** Texture loader */
   loadTexture(url, name) {
-    if (!this.#assets[name]) {
-      this.#assets[name] = {}
-    }
-    return new Promise((resolve) => {
-      this.#textureLoader.load(url, (result) => {
-        this.#assets[name].texture = result
-        resolve(result)
-      })
-    })
+    return new Promise((resolve, reject) => {
+      this.textureLoader.load(
+        url,
+        (tex) => resolve(tex),
+        undefined,
+        (err) => {
+          console.error(`❌ Failed to load texture (${name}):`, err);
+          reject(err);
+        }
+      );
+    });
   }
 
+  /** Image loader (raw <img>) */
   loadImage(url, name) {
-    return new Promise((resolve) => {
-      const image = new Image()
-
-      image.onload = () => {
-        this.#assets[name].img = image
-        resolve(image)
-      }
-
-      image.src = url
-    })
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = (err) => {
+        console.error(`❌ Failed to load image (${name}):`, err);
+        reject(err);
+      };
+      image.src = url;
+    });
   }
 
+  /** Font loader */
   loadFont(url, name) {
-    return new Promise((resolve) => {
-      this.#FontLoader.load(
+    return new Promise((resolve, reject) => {
+      this.fontLoader.load(
         url,
-        (font) => {
-          this.#assets[name].font = font
-          resolve(font)
-        },
-        () => {},
+        (font) => resolve(font),
+        undefined,
         (err) => {
-          console.log('An error happened', err)
+          console.error(`❌ Failed to load font (${name}):`, err);
+          reject(err);
         }
-      )
-    })
+      );
+    });
   }
 
+  /** OBJ loader */
   loadObj(url, name) {
-    return new Promise((resolve) => {
-      this.#OBJLoader.load(
+    return new Promise((resolve, reject) => {
+      this.objLoader.load(
         url,
-        (object) => {
-          this.#assets[name].obj = object
-          resolve(object)
-        },
-        () => {},
+        (obj) => resolve(obj),
+        undefined,
         (err) => {
-          console.log('An error happened', err)
+          console.error(`❌ Failed to load OBJ (${name}):`, err);
+          reject(err);
         }
-      )
-    })
+      );
+    });
+  }
+
+  /** Quick getters */
+  get(name) {
+    return this.assets[name];
+  }
+
+  clear() {
+    this.assets = {};
   }
 }
 
-export default new LoaderManager()
+export default new LoaderManager();
