@@ -26,7 +26,7 @@ import {
 import Stats from "stats.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Reflector } from "three/examples/jsm/objects/Reflector.js";
-import loaderManager from "../managers/LoaderManager.js";
+import loaderManager from "../managers/loaderManager.js";
 import fragmentShader from "../glsl/main.frag?raw";
 import vertexShader from "../glsl/main.vert?raw";
 
