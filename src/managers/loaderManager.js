@@ -15,12 +15,10 @@ class LoaderManager {
     this.fontLoader = new FontLoader(this.manager);
     this.dracoLoader = new DRACOLoader(this.manager);
 
-    // Draco decoder
     this.dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
     this.gltfLoader.setDRACOLoader(this.dracoLoader);
   }
 
-  /** Main loader function */
   async load(assetList = []) {
     const tasks = assetList.map(async (asset) => {
       const { name, model, texture, img, font, obj, gltf } = asset;
@@ -61,7 +59,6 @@ class LoaderManager {
     console.log("✅ Assets loaded:", this.assets);
   }
 
-  /** GLTF/GLB loader */
   loadGLTF(url, name) {
     return new Promise((resolve, reject) => {
       this.gltfLoader.load(
@@ -76,7 +73,6 @@ class LoaderManager {
     });
   }
 
-  /** Texture loader */
   loadTexture(url, name) {
     return new Promise((resolve, reject) => {
       this.textureLoader.load(
@@ -91,7 +87,6 @@ class LoaderManager {
     });
   }
 
-  /** Image loader (raw <img>) */
   loadImage(url, name) {
     return new Promise((resolve, reject) => {
       const image = new Image();
@@ -104,7 +99,6 @@ class LoaderManager {
     });
   }
 
-  /** Font loader */
   loadFont(url, name) {
     return new Promise((resolve, reject) => {
       this.fontLoader.load(
@@ -119,7 +113,6 @@ class LoaderManager {
     });
   }
 
-  /** OBJ loader */
   loadObj(url, name) {
     return new Promise((resolve, reject) => {
       this.objLoader.load(
@@ -134,7 +127,6 @@ class LoaderManager {
     });
   }
 
-  /** Quick getters */
   get(name) {
     return this.assets[name];
   }
