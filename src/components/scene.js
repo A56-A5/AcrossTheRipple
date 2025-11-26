@@ -8,6 +8,7 @@ import {
   BufferGeometry,
   BufferAttribute,
   PointsMaterial,
+  MathUtils,
   Points,
   Raycaster,
   IcosahedronGeometry,
@@ -49,6 +50,9 @@ export default class MainScene {
     this.stats = new Stats();
     document.body.appendChild(this.stats.dom);
 
+    this.initTimer();
+
+
     this.scene = new Scene();
     this.scene.background = new Color(0x000000);
 
@@ -60,10 +64,13 @@ export default class MainScene {
       0.1,
       10000
     );
-    this.camera.position.set(20, 50, 160);
+    this.camera.position.set(20, 50, 50);
     this.scene.add(this.camera);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    //this.controls.minPolarAngle = 0;          // looking straight down
+    this.controls.maxPolarAngle = Math.PI/2;  // horizontal view
+
 
     this.addLights();
 
@@ -80,6 +87,87 @@ export default class MainScene {
     );
 
     this.draw();
+  }
+
+  initTimer() {
+    this.timerDuration = 60;
+    this.timeLeft = 60;
+
+    this.sinkingStarted = false;
+    this.sinkStartY = null;
+
+    this.createTimerUI(); // build UI here
+  }
+
+  updateTimer(dt) {
+    if (this.timeLeft <= 0) return;
+
+    this.timeLeft -= dt;
+    if (this.timeLeft < 0) this.timeLeft = 0;
+
+    // Update UI bar
+    const percentage = (this.timeLeft / this.timerDuration) * 100;
+    this.timerBar.style.width = percentage + "%";
+
+    // Color transitions
+    if (this.timeLeft <= 10) this.timerBar.style.background = "#ff3b3b";
+    else if (this.timeLeft <= 20) this.timerBar.style.background = "#ff9800";
+
+    // Start sinking at 10 secs
+    if (this.timeLeft <= 10 && !this.sinkingStarted) {
+      this.sinkingStarted = true;
+      this.sinkStartY = this.boat.position.y;
+    }
+  }
+
+  createTimerUI() {
+    // Container
+    this.timerContainer = document.createElement("div");
+    this.timerContainer.id = "timerBarContainer";
+    document.body.appendChild(this.timerContainer);
+
+    // Bar
+    this.timerBar = document.createElement("div");
+    this.timerBar.id = "timerBar";
+    this.timerContainer.appendChild(this.timerBar);
+
+    // CSS
+    const style = document.createElement("style");
+    style.innerHTML = `
+      #timerBarContainer {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        height: 12px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 6px;
+        overflow: hidden;
+        z-index: 99999;
+      }
+      #timerBar {
+        height: 100%;
+        width: 100%;
+        background: #4caf50;
+        transition: width 0.2s linear;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  updateBoatSinking() {
+    if (!this.sinkingStarted) return;
+
+    const progress = MathUtils.mapLinear(
+      this.timeLeft,
+      8, 0,
+      0, 1  
+    );
+
+    const sinkDepth = 5;
+
+    this.boat.position.y = this.sinkStartY - progress * sinkDepth;
   }
 
   addLights() {
@@ -171,6 +259,9 @@ export default class MainScene {
 
     const dt = this.clock.getDelta();
 
+    this.updateTimer(dt);
+    this.updateBoatSinking();
+
     this.groundMirror.material.uniforms.time.value += 0.7;
 
     if (!this.sphere) {
@@ -192,14 +283,14 @@ export default class MainScene {
     updateRipples(this.scene, this.ripples, this.boat);
     updateBoatPhysics(this.boat, dt);
 
-    this.controls.target.copy(this.boat.position);
+    this.controls.target.copy(this.boat.position);  
+    this.controls.target.y += 5; //because of sinking 
     this.controls.update();
 
     this.sky.position.copy(this.camera.position);
 
     this.groundMirror.position.copy(this.camera.position);
     this.groundMirror.position.y = 0;
-
 
     this.renderer.render(this.scene, this.camera);
 

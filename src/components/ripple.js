@@ -84,8 +84,7 @@ export function updateRipples(scene, ripples, boat) {
         const cross = fwd.x * dir.z - fwd.z * dir.x;
         const signed = Math.atan2(cross, dot);
 
-        const angVel = MathUtils.clamp(signed * 0.6, -6, 6);
-        boat.userData.angularVelocity += angVel;
+        boat.userData.angularTarget += MathUtils.clamp(signed * 0.6, -1, 1);
         boat.userData.angularEnd = Date.now() + 1500;
       }
     }

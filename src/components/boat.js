@@ -26,6 +26,7 @@ export function createBoat(scene, groundMirror) {
     impulses: [],
     angularVelocity: 0,
     angularEnd: 0,
+    angularTarget: 0,
   };
 
   return boatModel;
@@ -76,10 +77,17 @@ export function updateBoatPhysics(boat, dt) {
   boat.position.z += cur.z * dt;
 
   // apply rotation (Y only)
-  if (Math.abs(ud.angularVelocity) > 1e-4) {
-    boat.rotation.y += ud.angularVelocity * dt;
-    ud.angularVelocity *= 1 - 1.8 * dt;
-    if (now > ud.angularEnd) ud.angularVelocity *= 0.6;
-    if (Math.abs(ud.angularVelocity) < 1e-4) ud.angularVelocity = 0;
-  }
+  // Smoothly rotate toward angularTarget
+  const lerpFactor = 0.05;  // adjust for smoothness
+  const damping = 0.95;     // slows down over time
+  
+  // move angularVelocity toward target
+  ud.angularVelocity += (ud.angularTarget - ud.angularVelocity) * lerpFactor;
+  ud.angularVelocity *= damping;
+  
+  // apply rotation
+  boat.rotation.y += ud.angularVelocity * dt;
+  
+  // slowly decay target
+  ud.angularTarget *= damping;
 }
