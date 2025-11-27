@@ -23,7 +23,8 @@ import Stats from "stats.js";
 import loaderManager from "../managers/loaderManager.js";
 
 import { createWater } from "./water.js";
-import { createBoat, updateBoatPhysics } from "./boat.js";
+import { spawnIcebergs } from "./bergs.js";
+import { createBoat, updateBoatPhysics, updateBoatSinking } from "./boat.js";
 import { createRippleGeometry, spawnRipple, updateRipples } from "./ripple.js";
 
 export default class MainScene {
@@ -42,16 +43,27 @@ export default class MainScene {
     await loaderManager.load([
       { name: "waterdudv", texture: "/textures/waterdudv.jpg" },
       { name: "matcap", texture: "/textures/matcap.png" },
-      { name: "paper", texture: "/textures/paper2.png" },
+      { name: "paper", texture: "/textures/paper.png" },
+      { name: "paper2", texture: "/textures/paper2.png" },
       { name: "berg", texture: "/textures/berg.png" },
       { name: "boatModel", model: "/models/boat.glb" },
+      { name: "star", model: "/models/star.glb" },
+      { name: "berg1", model: "/models/berg1.glb" },
+      { name: "berg2", model: "/models/berg2.glb" },
+      { name: "berg3", model: "/models/berg3.glb" },
+      { name: "berg4", model: "/models/berg4.glb" },
+      { name: "berg5", model: "/models/berg5.glb" },
+      { name: "berg6", model: "/models/berg6.glb" },
+      { name: "berg7", model: "/models/berg7.glb" },
+      { name: "berg8", model: "/models/berg8.glb" },
+      { name: "berg9", model: "/models/berg9.glb" },
+      { name: "berg10", model: "/models/berg10.glb" }
     ]);
 
     this.stats = new Stats();
     document.body.appendChild(this.stats.dom);
 
     this.initTimer();
-
 
     this.scene = new Scene();
     this.scene.background = new Color(0x000000);
@@ -76,6 +88,13 @@ export default class MainScene {
 
     this.groundMirror = createWater(this.scene);
     this.boat = createBoat(this.scene, this.groundMirror);
+
+    this.icebergs = spawnIcebergs(this.scene, this.boat, {
+      amount: 25,
+      minDistance: 40,
+      maxDistance: 180,
+      verticalRange: 5
+    });
 
     this.createSky();
 
@@ -154,20 +173,6 @@ export default class MainScene {
       }
     `;
     document.head.appendChild(style);
-  }
-
-  updateBoatSinking() {
-    if (!this.sinkingStarted) return;
-
-    const progress = MathUtils.mapLinear(
-      this.timeLeft,
-      8, 0,
-      0, 1  
-    );
-
-    const sinkDepth = 5;
-
-    this.boat.position.y = this.sinkStartY - progress * sinkDepth;
   }
 
   addLights() {
@@ -260,8 +265,8 @@ export default class MainScene {
     const dt = this.clock.getDelta();
 
     this.updateTimer(dt);
-    this.updateBoatSinking();
-
+    updateBoatSinking(this.boat, this.sinkStartY, this);
+    
     this.groundMirror.material.uniforms.time.value += 0.7;
 
     if (!this.sphere) {

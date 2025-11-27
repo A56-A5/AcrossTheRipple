@@ -32,7 +32,7 @@ export function createBoat(scene, groundMirror) {
   return boatModel;
 }
 
-export function addBoatImpulse(boat, dir, moveDistance = 15, durationMs = 5000) {
+export function addBoatImpulse(boat, dir, moveDistance = 20, durationMs = 4000) {
   const now = Date.now();
   const velocity = dir.clone().multiplyScalar(moveDistance / (durationMs / 1000));
 
@@ -90,4 +90,17 @@ export function updateBoatPhysics(boat, dt) {
   
   // slowly decay target
   ud.angularTarget *= damping;
+}
+
+export function updateBoatSinking(boat, sinkStartY, context) {
+  if (!context.sinkingStarted) return;
+
+  const progress = MathUtils.mapLinear(
+    context.timeLeft,
+    8, 0,
+    0, 1
+  );
+
+  const sinkDepth = 5;
+  boat.position.y = sinkStartY - progress * sinkDepth;
 }
