@@ -22,6 +22,7 @@ export function createRippleGeometry() {
   return g;
 }
 
+//roundy thingy that becomes biggie
 export function spawnRipple(scene, ripples, unitGeom, pos, groundMirror, triggersMovement) {
   const mat = new LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1 });
   const ring = new Line(unitGeom.clone(), mat);
@@ -43,6 +44,7 @@ export function spawnRipple(scene, ripples, unitGeom, pos, groundMirror, trigger
   });
 }
 
+//makes roundy thingy more biggie and makes boat go vroom
 export function updateRipples(scene, ripples, boat) {
   const now = performance.now();
 
@@ -56,7 +58,6 @@ export function updateRipples(scene, ripples, boat) {
 
     if (boat && r.triggersMovement && !r.triggered) {
 
-      // XZ only distance
       const bp = new Vector3();
       boat.getWorldPosition(bp);
 
@@ -71,10 +72,8 @@ export function updateRipples(scene, ripples, boat) {
         if (dir.lengthSq() < 1e-6) dir.set(1, 0, 0);
         dir.normalize();
 
-        // linear impulse
         addBoatImpulse(boat, dir, 15, 5000);
 
-        // angular (yaw) impulse
         const fwd = new Vector3();
         boat.getWorldDirection(fwd);
         fwd.y = 0;

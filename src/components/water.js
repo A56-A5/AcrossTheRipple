@@ -12,6 +12,7 @@ export function resolveIncludes(shader) {
   return shader.replace(/#include <(.*?)>/g, (match, name) => ShaderChunk[name] || "");
 }
 
+//shiny wotah thingy 
 export function createWater(scene) {
   const geometry = new CircleGeometry(4000, 80, 64);
   const customShader = Reflector.ReflectorShader;

@@ -23,7 +23,7 @@ import Stats from "stats.js";
 import loaderManager from "../managers/loaderManager.js";
 
 import { createWater } from "./water.js";
-import { spawnIcebergs } from "./bergs.js";
+import { loadAllIcebergs } from "./bergs.js";
 import { createBoat, updateBoatPhysics, updateBoatSinking } from "./boat.js";
 import { createRippleGeometry, spawnRipple, updateRipples } from "./ripple.js";
 
@@ -48,16 +48,7 @@ export default class MainScene {
       { name: "berg", texture: "/textures/berg.png" },
       { name: "boatModel", model: "/models/boat.glb" },
       { name: "star", model: "/models/star.glb" },
-      { name: "berg1", model: "/models/berg1.glb" },
-      { name: "berg2", model: "/models/berg2.glb" },
-      { name: "berg3", model: "/models/berg3.glb" },
-      { name: "berg4", model: "/models/berg4.glb" },
-      { name: "berg5", model: "/models/berg5.glb" },
-      { name: "berg6", model: "/models/berg6.glb" },
-      { name: "berg7", model: "/models/berg7.glb" },
-      { name: "berg8", model: "/models/berg8.glb" },
-      { name: "berg9", model: "/models/berg9.glb" },
-      { name: "berg10", model: "/models/berg10.glb" }
+      { name: "allbergs", model: "/models/allbergs.glb" },
     ]);
 
     this.stats = new Stats();
@@ -89,12 +80,8 @@ export default class MainScene {
     this.groundMirror = createWater(this.scene);
     this.boat = createBoat(this.scene, this.groundMirror);
 
-    this.icebergs = spawnIcebergs(this.scene, this.boat, {
-      amount: 25,
-      minDistance: 40,
-      maxDistance: 180,
-      verticalRange: 5
-    });
+    this.icebergs = loadAllIcebergs(this.scene);
+
 
     this.createSky();
 
@@ -286,10 +273,10 @@ export default class MainScene {
     this.sphere.rotation.z = t * 8;
 
     updateRipples(this.scene, this.ripples, this.boat);
-    updateBoatPhysics(this.boat, dt);
+    updateBoatPhysics(this.boat, dt, this.icebergs);
 
     this.controls.target.copy(this.boat.position);  
-    this.controls.target.y += 5; //because of sinking 
+    this.controls.target.y += 5; 
     this.controls.update();
 
     this.sky.position.copy(this.camera.position);
