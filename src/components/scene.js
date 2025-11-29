@@ -47,11 +47,11 @@ export default class MainScene {
 
   async init() {
     await LoaderManager.load([
-      { name: "waterdudv", texture: "/textures/waterdudv.jpg" },
-      { name: "matcap", texture: "/textures/matcap.png" },
-      { name: "boatModel", model: "/models/boat.glb" },
-      { name: "star", model: "/models/star.glb" },
-      { name: "allbergs", model: "/models/allbergs.glb" }
+      { name: "waterdudv", texture: "textures/waterdudv.jpg" },
+      { name: "matcap", texture: "textures/matcap.png" },
+      { name: "boatModel", model: "models/boat.glb" },
+      { name: "star", model: "models/star.glb" },
+      { name: "allbergs", model: "models/allbergs.glb" }
     ]);
 
     this.stats = new Stats();
