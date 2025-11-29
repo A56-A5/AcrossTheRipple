@@ -5,7 +5,9 @@ What a better way to spend my time not studying, right?
 
 ## Play 
 
-[Play the Game Here](https://across-the-ripple.vercel.app)
+[Play the Game Here](https://across-the-ripple.vercel.app) <br>
+
+[itch.io/across-the-ripple](https://a56-a5.itch.io/across-the-ripple)
 
 ## Gameplay
 
