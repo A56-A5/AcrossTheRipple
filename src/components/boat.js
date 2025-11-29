@@ -1,5 +1,5 @@
 import { Vector3, MathUtils, Sphere, Mesh, MeshMatcapMaterial, MeshBasicMaterial, Quaternion } from "three";
-import loaderManager from "../managers/loaderManager";
+import loaderManager from "../managers/loadermanager";
 import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
 import * as THREE from "three";
 
@@ -41,7 +41,7 @@ export function createBoat(scene, groundMirror) {
   });
 
   boatModel.scale.set(10, 10, 10);
-  boatModel.position.set(0, 1.49 , 0);
+  boatModel.position.set(0, 1.69 , 0);
 
   scene.add(boatModel);
 
@@ -63,7 +63,7 @@ export function createBoat(scene, groundMirror) {
 }
 
 //make boat go vroom
-export function addBoatImpulse(boat, dir, moveDistance = 20, durationMs = 4000) {
+export function addBoatImpulse(boat, dir, moveDistance = 2500, durationMs = 4000) {
   const now = Date.now();
   const velocity = dir.clone().multiplyScalar(moveDistance / (durationMs / 1000));
 
@@ -93,7 +93,7 @@ export function updateBoatPhysics(boat, dt, bergs = []) {
   }
   ud.impulses = still;
 
-  const accel = 8;
+  const accel = 6;
   const toTarget = desired.clone().sub(cur);
   const dist = toTarget.length();
   if (dist > 1e-4) {

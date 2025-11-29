@@ -72,7 +72,7 @@ export function updateRipples(scene, ripples, boat) {
         if (dir.lengthSq() < 1e-6) dir.set(1, 0, 0);
         dir.normalize();
 
-        addBoatImpulse(boat, dir, 15, 5000);
+        addBoatImpulse(boat, dir, 25, 4000);
 
         const fwd = new Vector3();
         boat.getWorldDirection(fwd);

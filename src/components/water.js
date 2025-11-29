@@ -3,7 +3,7 @@ import {
   RepeatWrapping,
 } from "three";
 import { Reflector } from "three/examples/jsm/objects/Reflector.js";
-import loaderManager from "../managers/loaderManager.js";
+import loaderManager from "../managers/loadermanager.js";
 import fragmentShader from "../glsl/main.frag?raw";
 import vertexShader from "../glsl/main.vert?raw";
 import { ShaderChunk } from "three";
