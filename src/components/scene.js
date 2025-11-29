@@ -167,7 +167,7 @@ export default class MainScene {
     return false;
   }
 
-  placeStarRandom(star, maxDist = 200, minDist = 150) {
+  placeStarRandom(star, maxDist = 300, minDist = 150) {
     if (!this.boat) {
       star.position.set(Math.random() * 100 - 50, 1, Math.random() * 100 - 50);
       return;

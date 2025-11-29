@@ -3,7 +3,7 @@ import {
   RepeatWrapping,
 } from "three";
 import { Reflector } from "three/examples/jsm/objects/Reflector.js";
-import loaderManager from "../managers/loadermanager.js";
+import LoaderManager from "../managers/loadermanager.js";
 import fragmentShader from "../glsl/main.frag?raw";
 import vertexShader from "../glsl/main.vert?raw";
 import { ShaderChunk } from "three";
@@ -20,7 +20,7 @@ export function createWater(scene) {
   customShader.vertexShader = resolveIncludes(vertexShader);
   customShader.fragmentShader = resolveIncludes(fragmentShader);
 
-  const dudvMap = loaderManager.assets["waterdudv"].texture;
+  const dudvMap = LoaderManager.assets["waterdudv"].texture;
   dudvMap.wrapS = dudvMap.wrapT = RepeatWrapping;
 
   customShader.uniforms.tDudv = { value: dudvMap };

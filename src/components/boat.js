@@ -1,5 +1,5 @@
 import { Vector3, MathUtils, Sphere, Mesh, MeshMatcapMaterial, MeshBasicMaterial, Quaternion } from "three";
-import loaderManager from "../managers/loadermanager";
+import loaderManager from "../managers/loaderManager";
 import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
 
 Mesh.prototype.raycast = acceleratedRaycast;
@@ -23,19 +23,6 @@ export function createBoat(scene, groundMirror) {
 
       c.geometry.boundsTree = new MeshBVH(c.geometry, { lazyGeneration: false });
 
-      //  wireframe hitbox visualization for myself
-      const wireMat = new MeshBasicMaterial({
-        color: 0x00ff00,
-        wireframe: true,
-        opacity: 0.3,
-        transparent: true,
-      });
-      const wireMesh = new Mesh(c.geometry, wireMat);
-      wireMesh.position.copy(c.position);
-      wireMesh.quaternion.copy(c.quaternion);
-      wireMesh.scale.copy(c.scale);
-      scene.add(wireMesh);
-      c.userData.hitboxMesh = wireMesh;
     }
   });
 
