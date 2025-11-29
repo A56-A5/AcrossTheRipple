@@ -31,20 +31,6 @@ export function loadAllIcebergs(scene) {
 
       c.userData.collisionRadius = c.geometry.boundingSphere.radius * c.scale.x;
 
-      //  wireframe hitbox visualization for myself
-      const wireMat = new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        wireframe: true,
-        opacity: 0.3,
-        transparent: true,
-      });
-      const wireMesh = new THREE.Mesh(c.geometry, wireMat);
-      wireMesh.position.copy(c.position);
-      wireMesh.rotation.copy(c.rotation);
-      wireMesh.scale.copy(c.scale);
-      scene.add(wireMesh);
-      c.userData.hitboxMesh = wireMesh;
-
       bergs.push(c);
     }
   });

@@ -1,7 +1,6 @@
 import { Vector3, MathUtils, Sphere, Mesh, MeshMatcapMaterial, MeshBasicMaterial, Quaternion } from "three";
 import loaderManager from "../managers/loadermanager";
 import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
-import * as THREE from "three";
 
 Mesh.prototype.raycast = acceleratedRaycast;
 
