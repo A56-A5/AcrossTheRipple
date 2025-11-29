@@ -49,9 +49,6 @@ export default class MainScene {
     await LoaderManager.load([
       { name: "waterdudv", texture: "/textures/waterdudv.jpg" },
       { name: "matcap", texture: "/textures/matcap.png" },
-      { name: "paper", texture: "/textures/paper.png" },
-      { name: "paper2", texture: "/textures/paper2.png" },
-      { name: "berg", texture: "/textures/berg.png" },
       { name: "boatModel", model: "/models/boat.glb" },
       { name: "star", model: "/models/star.glb" },
       { name: "allbergs", model: "/models/allbergs.glb" }

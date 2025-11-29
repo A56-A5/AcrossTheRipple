@@ -12,3 +12,105 @@ html, body {
   position: relative;
 }
 
+#timerBarContainer {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 12px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 99999;
+}
+
+#timerBar {
+  height: 100%;
+  width: 100%;
+  background: #4caf50;
+  transition: width 0.2s linear;
+}
+
+#atr_score_ui {
+  position: fixed;
+  top: 46px;
+  right: 20px;
+  width: 200px;
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  font-family: system-ui, Arial, sans-serif;
+  z-index: 100000;
+  display: flex;
+  gap: 6px;
+}
+
+#atr_score_ui .col {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+#atr_score_ui .label {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+#atr_score_ui .value {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+#atr_controls {
+  position: fixed;
+  top: 46px; 
+  right: 20px;
+  z-index: 100000;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.atr_button {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.atr_button:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+@media (max-width: 600px) {
+  #atr_controls {
+    margin-top: 100px;
+    bottom: 80px; 
+    right: 50%;
+    transform: translateX(50%);
+    flex-direction: column;
+    width: 140px;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  #atr_score_ui {
+    top: 20px;
+    right: 50%;
+    transform: translateX(50%);
+    width: 90%;
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+  }
+
+  #timerBarContainer {
+    top: 60px;
+    width: 90%;
+  }
+}
