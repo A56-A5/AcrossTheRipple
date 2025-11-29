@@ -107,6 +107,7 @@ export default class MainScene {
     this.draw();
   }
 
+  //twinkle twinkle weird star
   async loadStarModel() {
     const starAsset = LoaderManager.get("star");
     this.starPrefab = starAsset?.model?.scene || starAsset?.model?.scenes?.[0] || null;
@@ -143,6 +144,7 @@ export default class MainScene {
     return star;
   }
 
+  //is star in iceberg go brrrr
   isInsideIceberg(pos) {
     if (!this.icebergs) return false;
 
@@ -167,6 +169,7 @@ export default class MainScene {
     return false;
   }
 
+  //put star in not iceberg place
   placeStarRandom(star, maxDist = 300, minDist = 150) {
     if (!this.boat) {
       star.position.set(Math.random() * 100 - 50, 1, Math.random() * 100 - 50);
@@ -201,6 +204,7 @@ export default class MainScene {
     );
   }
 
+//boat go nom nom star
   checkStarCollision(dt) {
     if (!this.boat) return;
 
@@ -226,6 +230,7 @@ export default class MainScene {
     }
   }
 
+  //spinny spinny star
   updateStars(dt) {
     for (const s of this.stars) {
       s.rotation.y += s.userData.spinSpeed * dt;
@@ -238,6 +243,7 @@ export default class MainScene {
     }
   }
 
+  //timer go tick tock
   initTimer() {
     this.timerDuration = 60;
     this.timeLeft = 60;
@@ -357,6 +363,7 @@ export default class MainScene {
     document.head.appendChild(style);
   }
 
+  //shiny stars 
   createScoreUI() {
     const existing = document.getElementById("atr_score_ui");
     if (existing) existing.remove();
@@ -424,6 +431,7 @@ export default class MainScene {
     if (highVal) highVal.innerText = String(this.highscore);
   }
 
+  //make boat and star and timer go brrr
   redoGame() {
     this.currentScore = 0;
 
@@ -453,6 +461,7 @@ export default class MainScene {
     this.updateScoreUI();
   }
 
+  //lights go flashy
   addLights() {
     const d = new DirectionalLight(0xffffff, 0);
     this.scene.add(d);
@@ -460,7 +469,8 @@ export default class MainScene {
     const a = new AmbientLight(0x666666);
     this.scene.add(a);
   }
-
+  
+  //shiny stars
   createSky() {
     const g = new BufferGeometry();
     const positions = [];
