@@ -225,6 +225,9 @@ export default class MainScene {
         this.updateScoreUI();
 
         this.timeLeft = this.timerDuration;
+        this.boat.position.y = this._boatInitial.position.y;
+        this.sinkingStarted = false;
+        this.sinkStartY = null;
         this.placeStarRandom(s);
       }
     }
