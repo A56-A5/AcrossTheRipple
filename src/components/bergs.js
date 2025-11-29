@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import loaderManager from "../managers/loaderManager.js";
+import loaderManager from "../managers/loadermanager.js";
 import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
 
 THREE.Mesh.prototype.raycast = acceleratedRaycast;

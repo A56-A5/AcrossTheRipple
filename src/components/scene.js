@@ -20,7 +20,7 @@ import {
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import Stats from "stats.js";
-import LoaderManager from "../managers/loaderManager.js";
+import LoaderManager from "../managers/loadermanager.js";
 
 import { createWater } from "./water.js";
 import { loadAllIcebergs } from "./bergs.js";
@@ -469,7 +469,7 @@ export default class MainScene {
     const a = new AmbientLight(0x666666);
     this.scene.add(a);
   }
-  
+
   //shiny stars
   createSky() {
     const g = new BufferGeometry();

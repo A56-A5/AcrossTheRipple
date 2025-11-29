@@ -1,5 +1,5 @@
 import { Vector3, MathUtils, Sphere, Mesh, MeshMatcapMaterial, MeshBasicMaterial, Quaternion } from "three";
-import loaderManager from "../managers/loaderManager";
+import loaderManager from "../managers/loadermanager";
 import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
 
 Mesh.prototype.raycast = acceleratedRaycast;
@@ -122,14 +122,22 @@ export function updateBoatPhysics(boat, dt, bergs = []) {
 export function updateBoatSinking(boat, sinkStartY, context) {
   if (!context.sinkingStarted) return;
 
-  const progress = MathUtils.mapLinear(
-    context.timeLeft,
-    8, 0,
+  const progress = MathUtils.clamp(
+    MathUtils.mapLinear(
+      context.timeLeft,
+      8, 0,   
+      0, 1   
+    ),
     0, 1
   );
 
   const sinkDepth = 5;
   boat.position.y = sinkStartY - progress * sinkDepth;
+
+  if (context.timeLeft <= 0) {
+    context.sinkingStarted = false;
+    context.timeLeft = 0;
+  }
 
   const tmpPos = new Vector3();
   const tmpScale = new Vector3();
